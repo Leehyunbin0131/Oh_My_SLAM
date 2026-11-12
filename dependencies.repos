@@ -1,0 +1,9 @@
+repositories:
+  external/oh_my_control:
+    type: git
+    url: https://github.com/Leehyunbin0131/Oh-My-Control.git
+    version: c703f130c14388b4b7845a25b900d726f8c9a71d
+  external/oh_my_mobilerobot:
+    type: git
+    url: https://github.com/Leehyunbin0131/Oh-My-MobileRobot.git
+    version: f85154b53ea57b80e8a8ff6e4d6d8d38a8a0c35b
