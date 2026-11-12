@@ -1,6 +1,8 @@
 # 기술 기준과 호환성
 
-대상 환경: **Ubuntu 24.04 / ROS 2 Jazzy / Gazebo Harmonic**. 기준일: 2026-11-12.
+[README](../README.md) · [통합 설계](architecture.md) · [구현 계획](roadmap.md) · [검증 기준](acceptance.md)
+
+대상 환경(**Ubuntu 24.04 · ROS 2 Jazzy · Gazebo Harmonic**)의 패키지 버전, 재사용하는 하위 제어·로봇 모델 커밋, 차체 기하 초기값과 기존 자산의 이관 범위를 정의합니다.
 
 ## 시스템 기준
 
