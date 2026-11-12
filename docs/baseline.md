@@ -1,26 +1,25 @@
-# 현재 기준과 출처
+# 기술 기준과 호환성
 
-확인일: **2026-11-12**. 이 문서는 관측한 현재 상태와 앞으로 구현할 설계를 구분합니다.
+대상 환경: **Ubuntu 24.04 / ROS 2 Jazzy / Gazebo Harmonic**. 기준일: 2026-11-12.
 
-## 확인한 현재 상태
+## 시스템 기준
 
-| 항목 | 관측 결과 | 근거·한계 |
+| 구성 요소 | 기준 | 적용 조건 |
 | --- | --- | --- |
-| 메가/Orin 공통 제어 | `Oh-My-Control@c703f130c14388b4b7845a25b900d726f8c9a71d` | 이전 작업에서 GitHub와 Orin `ros2_dev_ws`의 commit·소스 일치 확인 |
-| 기본 실물 구동 | 무부하·지면 전후진·좌우 회전·정지·재출발 정상 | 2026-11-12 사용자 보고; 계측 정지거리나 ROS Nav2 도착 결과는 아님 |
-| Orin 환경 | aarch64, Ubuntu 24.04.5 LTS, `/opt/ros/jazzy` | 이번 계획 시작 시 SSH 읽기로 확인 |
-| 기존 실물 workspace | `robot_mapping_ws` | 현재 README의 수동 mapping·저장 지도 navigation 설명을 읽음 |
-| 개발 PC 소스 위치 | `~/MyRos/Oh-My-Control`, `~/MyRos/mobile_robot_sim`, `~/MyRos/Oh-My-MobileRobot` | 조사 도중 홈에서 MyRos 아래로 이동된 새 위치 확인 |
-| 기존 시뮬레이션 | Jazzy + Harmonic, 기본 NavFn + MPPI, 보로노이 선호 cost·깊이 장애물 기억 | 소스·README 확인. sim 폴더 자체는 Git 저장소가 아님 |
-| 모델 저장소 | `Oh-My-MobileRobot@f85154b53ea57b80e8a8ff6e4d6d8d38a8a0c35b` | 작업 트리 clean, sim의 xacro와 내용 일치 |
+| 메가/Orin 공통 제어 | `Oh-My-Control@c703f130c14388b4b7845a25b900d726f8c9a71d` | 저수준 구동 기준. 새 ROS 연결은 별도 검증 |
+| 실물 컴퓨터 | Jetson Orin, aarch64, Ubuntu 24.04.5 LTS, ROS 2 Jazzy | ARM64에서 별도 빌드 |
+| 기존 실물 구성 | `robot_mapping_ws`, 수동 mapping 및 저장 지도 navigation | 새 bridge·odom/TF 계약으로 이관 |
+| 기존 시뮬레이션 | Jazzy + Harmonic, NavFn + MPPI, 보로노이 선호 cost·깊이 장애물 기억 | 새 공통 기준은 NavFn + RPP |
+| 모델 저장소 | `Oh-My-MobileRobot@f85154b53ea57b80e8a8ff6e4d6d8d38a8a0c35b` | description·CAD/mesh의 출처와 라이선스 유지 |
+| 소스 구성 | 기존 sim은 독립 Git 이력 없음 | 이관 파일의 SHA256·NOTICE로 출처 고정 |
 
-후속 SSH 소스 수집은 네트워크 단절(`No route to host`)로 수행하지 못했습니다. 따라서 현재 실물 ROS bridge의 상세 소스·실행 중 graph는 이 계획에서 확인했다고 주장하지 않습니다. P5에서 연결 후 최신 버전을 다시 대조합니다. 계획 수립 중 모터 구동·센서 장치 open·ROS launch는 실행하지 않았습니다.
+저수준 제어의 기본 실물 구동 확인은 ROS bridge·오도메트리·SLAM·Nav2의 인수 검증을 대체하지 않습니다. 실물 센서 드라이버의 정확한 설치 버전·토픽·frame·시간/QoS 설정은 P5의 배치 기준에 포함합니다.
 
 ## 개발 PC 설치 버전
 
-아래는 `/opt/ros/jazzy/share/*/package.xml`에서 읽은 값입니다. Orin의 동일 버전을 의미하지 않으며 배치 시 장비별로 기록합니다.
+개발 기준의 설치 버전은 다음과 같습니다. Orin의 호환 버전은 장비별 배치 manifest에 별도로 고정합니다.
 
-| 패키지 | 관측 버전 |
+| 패키지 | 기준 버전 |
 | --- | --- |
 | `ros_gz_bridge` | 1.0.24 |
 | `nav2_bringup`, `nav2_controller`, `nav2_mppi_controller` | 1.3.13 |
@@ -30,7 +29,7 @@
 
 문서의 최신 Jazzy branch와 설치된 바이너리가 완전히 같다고 가정하지 않습니다. 특히 stamped velocity 옵션·smoother timestamp 보존 설정은 P1에서 설치본의 선언 파라미터와 실제 메시지로 확인합니다.
 
-## 제어층의 현재 계약
+## 제어 계층 규격
 
 | 항목 | 값/의미 |
 | --- | --- |
@@ -43,7 +42,6 @@
 | 바퀴 상한 | 실물 운용 95 RPM / MCU 보호 100 RPM |
 | 정상 0 속도 | 제동/HOLD |
 | `STOP` | 제어·출력 해제 |
-| 기존 자동 검증 | 초기 공통계층·펌웨어 검증 후, 최신 WheelDrive의 관련 6개 검사 통과 |
 
 근거: [제어 소스 고정 커밋](https://github.com/Leehyunbin0131/Oh-My-Control/tree/c703f130c14388b4b7845a25b900d726f8c9a71d), 특히 `tools/wheel_drive.py`, `motor_link.py`, `motor_pid.py`, `drive_calibration.py`, `docs/control_rebuild.md`.
 
@@ -60,7 +58,7 @@
 | lidar | `base_link → lidar_link=(-0.14,0,0.143)` m, 이후 `laser_frame` z=0.0303 m | CAD 위치이며 실물 장착 TF를 확인 |
 | camera | `base_link → camera_link=(0.06505,0,0.1035)` m | optical transform 포함; 실물 높이/각도와 대조 |
 
-원본과 sim 복사본 xacro의 SHA256는 `5290010ef531becc2b4c5e3db8f64dff8692b4000129714ee13cbbf37a389009`로 일치했습니다. 기존 sim NOTICE의 과거 반입 commit과 현재 원본 저장소 HEAD는 다른 개념입니다.
+기준 xacro SHA256: `5290010ef531becc2b4c5e3db8f64dff8692b4000129714ee13cbbf37a389009`. 원본 저장소와 기존 sim의 모델 내용은 동일합니다. 버전 표기에서는 반입 당시 commit과 현재 원본 저장소 HEAD를 구분합니다.
 
 ## 재사용과 변경
 
@@ -76,13 +74,18 @@
 | ICP odometry | 새 기본 구성은 측정 wheel odom+IMU. 기존 ICP TF와 동시 발행하지 않음 |
 | 기존 실물 지도·보정 | 원본 보존, 장비별 설정으로 관리. 새 구성의 통과 근거로 자동 승계하지 않음 |
 
-## 기존 검증을 새 완료 근거로 오인하지 않기
+## 레거시 구성과의 호환성
 
-- 현재 실물 README는 **NavFn + RPP**, 0.30 m/s 목표를 설명합니다. 기존 보관 Nav2 검증 JSON은 **NavFn + MPPI**, `motor:=false` 조건입니다.
-- 보관 검증의 `/odom` 발행자는 `icp_odometry`, 약 12 Hz입니다. 새 wheel odom/EKF의 검증이 아닙니다.
-- 기존 검증에서 목표는 도착한 것이 아니라 취소됐습니다. 센서·lifecycle·경로 생성 성공을 새 실물 목표 도착 성공으로 쓰지 않습니다.
-- 기존 sim은 Gazebo가 `/odom`·odom TF를 함께 발행하고, 명령 guard는 `Twist`를 주기적으로 재발행합니다. 새 stamped 계약·단일 TF authority로 정리해야 합니다.
-- 기존 실물 README의 입력 timeout 뒤 지속적인 0 RPM/HOLD는 새 `WheelDrive`의 원본 만료 후 `STOP`과 다릅니다. [통합 설계](architecture.md)의 계약으로 통일합니다.
+| 구분 | 레거시 특성 | 이관 요구사항 |
+| --- | --- | --- |
+| 실물 controller | 운용 문서는 NavFn + RPP, 일부 보관 검증은 NavFn + MPPI | 실제 controller 설정을 고정하고 서로 다른 구성의 결과를 혼용하지 않음 |
+| 실물 odom | 보관 구성은 `icp_odometry`, 약 12 Hz | 새 측정 wheel odom/EKF로 전환, 기존 TF authority 비활성화 |
+| sim odom | Gazebo가 odom과 odom TF를 함께 제공 | EKF 적용 시 Gazebo TF를 제거 |
+| sim 명령 | `Twist`를 guard에서 주기적으로 재발행 | stamped 원본 수명·공통 명령 계약으로 변경 |
+| 실물 입력 timeout | 레거시 bridge는 지속적인 0 RPM/HOLD | 정상 zero와 입력 단절을 구분하고 단절 시 `STOP` |
+| 기존 인수 근거 | 일부 실행은 `motor:=false`, 경로 생성 후 취소 | 새 실물 목표 도착의 검증 근거로 사용하지 않음 |
+
+정확한 명령·TF 계약은 [통합 설계](architecture.md), 단계별 판정은 [검증 기준](acceptance.md)을 따릅니다.
 
 ## 공식 자료
 
